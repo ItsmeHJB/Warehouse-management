@@ -1,0 +1,48 @@
+21st March 2019 - DUE DATE
+
+£2b each warehouse
+£8b total
+
+Items have weight and shape
+warehouses can store a certain number of each shape, where each item has a max weight, as well as total cost in a warehouse
+Each warehouses has a certain number of spaces for different shapes
+Once a space is taken,the weight cannot be made up elsewhere
+
+ADD BREAKDOWN FOR 1)
+	Check if there is a legitimate spot that can hold this new item I.E is it just too big to fit anywhere
+	if :there is a spot in A
+		store in A
+	else:
+		See if there is space in other warehouses
+		if there is space in different warehouses:
+			check for optimal weight usage
+		if there is not space: 
+			reject item
+
+TO DO: (SEPERATE CODES)
+	1)
+	IMPLEMENT pseudo-code and code to do:
+		add item to warehouseA
+		if can't be stored:
+			move to another warehouse based on shape
+			or optimal weight usage
+		if move can't be done -> reject
+		(cost will always be considered)
+		
+	2)
+	THERE IS A van
+		van can do 1 trip per day, from one warehouse to another
+		van weight limit = 2 ton
+			ignoring weight and shape of items, plan how long it will take to move everything
+			max insurance on van is £1.5bn, then take weight and cost of items and recalculate
+			
+	3)
+	New data, with a new van
+		van can reach 2 warehouses, but can only travel A -> B -> C -> D but can relocate overnight
+		(van can travel A -> C for example)
+		calculate minimum trips to with weight and cost considered
+		
+	4)
+	Do it again, but they all have to be the same shape this time
+	weight limit = 2 ton and cost £1.5bn again
+	
