@@ -9,7 +9,7 @@ import csv
 
 # Declare global variables
 MAX_WAREHOUSE_VALUE = 2000000000
-MAX_VALUE = 8000000000
+MAX_TOTAL_VALUE = 8000000000
 
 # Define classes
 # Item class to reperesent a piece of art
@@ -55,12 +55,26 @@ def import_warehouse_shelf(warehouse, filename):
                 row[2] = int(row[2])
                 warehouse.add_shelf(row[0], row[1], row[2])
                 
+                
+# Small dictionary to convert the shape names to letters
+def convert(shape):
+    return {
+        'Rectangle': 'R',
+        'Sphere': 'C',
+        'Pyramid': 'P',
+        'Square': 'S',
+    }[shape] 
+
+               
+# Function to see if there's space in a warehouse    
+    
 #####################################################
 # Main Code #########################################
 #####################################################
 
-print("Welcome to the art dealership")
+print("Welcome to the art dealership\n")
 
+print("Initliasing empty warehouses\n")
 # Initialise warehouses
 A = Warehouse('warehouseA')
 B = Warehouse('warehouseB')
@@ -69,12 +83,39 @@ D = Warehouse('warehouseD')
 warehouseList = [A, B, C, D]
 total_insurance = 0
 
+print("Adding shelves to their warehouses\n")
 # Add the shelfs to their warehouses from CSV files
 for i in range(len(warehouseList)):
     file = warehouseList[i].name + 'Shelfs.csv'
     import_warehouse_shelf(warehouseList[i], file)
     
 # BEGIN CODE FOR SPECIFIC TASK #######################
+item_holder = []   
+total_warehouse_insurance = 0 
 
-
+print("Importing the items to be stored in warehouse A\n")
+# Import items to be insterted into warehouse A, load them into a list
+with open('items.csv', mode='r') as csv_file:
+    csv_reader = csv.reader(csv_file)
+    line_count = 0
+    for row in csv_reader:  # loop through csv file
+        if line_count == 0:  # Ignore the file headers
+            line_count += 1
+        else: # assign values to the item holder list
+            row[0] = int(row[0])
+            row[2] = int(row[2])
+            row[3] = convert(row[3])
+            row[4] = int(row[4])
+            item_holder.append(Item(row[0], row[1], row[2], row[3], row[4]))
+            
+while len(item_holder) > 0:
+    item = item_holder[0]
+    item_added = False
+    
+    # If the item to be added will be more than the total remaining warehouese value
+    if (total_warehouse_insurance + item.value) > MAX_TOTAL_VALUE:
+        print("Error: The item you wish to add will push the total insurance of the warehouses over the total remaining insurance")
         
+    elif 
+
+    item_holder.pop(0)
