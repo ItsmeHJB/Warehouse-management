@@ -1,8 +1,10 @@
-# Header:
 # File:           Base file.py
 # Purpose:        To contain all the basic classes for coursework 2 (dadsa)
 # Author:         Harrison Bennion
 # Student Number: 17012546
+
+# To do: import initial files
+#        add best fit case
 
 # Import libraries
 import csv
