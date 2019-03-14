@@ -8,6 +8,7 @@
 
 # Import libraries
 import csv
+from pathlib import Path
 
 # Declare global variables
 MAX_WAREHOUSE_VALUE = 2000000000
@@ -59,21 +60,26 @@ def import_warehouse_shelf(warehouse, filename):
                 row[1] = int(row[1])  # converts str to int from csv
                 row[2] = int(row[2])
                 warehouse.add_shelf(row[0], row[1], row[2])
-                
-                
-# Small dictionary to convert the shape names to letters #################################### DO I NEED THIS?
-# def convert(shape):
-#    return {
-#        'Rectangle': 'R',
-#        'Sphere': 'C',
-#        'Pyramid': 'P',
-#        'Square': 'S',
-#    }[shape]
 
 
-# Small dictionary to convert the letters back to letters
+# Function to import the start items for a warehouse
+def import_items(warehouse, filename):
+    with open(filename, mode='r') as csv_file:  # open each file for reading
+        csv_reader = csv.reader(csv_file)
+        line_count = 0
+        for row in csv_reader:  # loop through csv file
+            if line_count == 0:  # Ignore the file headers
+                line_count += 1
+            else:  # assign id, description, value, shape and weight to item array in warehouse
+                row[0] = int(row[0])
+                row[2] = int(row[2])
+                row[4] = int(row[4])
+                for shelf in range(len(warehouse.shelves)):
+                    if warehouse.shelves[shelf].shape == row[3]:
+                        new_item = Item(row[0], row[1], row[2], row[3], row[4])
+                        warehouse.shelves[shelf].append(new_item)
 
-               
+
 # Function to see if there's space in a warehouse
 def check_shelf(art_piece, shelf):
     if (len(shelf.items) < shelf.max_slots) and (art_piece.weight <= shelf.weight):
@@ -101,9 +107,18 @@ total_insurance = 0
 print("Adding shelves to their warehouses\n")
 # Add the shelves to their warehouses from CSV files
 for i in range(len(warehouseList)):
-    file = warehouseList[i].name + 'Shelves.csv'
-    import_warehouse_shelf(warehouseList[i], file)
-    
+    file = "../" + warehouseList[i].name + 'Shelves.csv'
+    cur_path = Path(__file__).parent
+    shelf_path = (cur_path / file). resolve()
+    import_warehouse_shelf(warehouseList[i], shelf_path)
+
+# Import the start items into their warehouses
+for i in range(len(warehouseList)):
+    file = "../" + warehouseList[i].name + '.csv'
+    cur_path = Path(__file__).parent
+    item_path = (cur_path / file).resolve()
+    import_items(warehouseList[i], item_path)
+
 # BEGIN CODE FOR SPECIFIC TASK #######################
 item_holder = []   
 total_warehouse_insurance = 0 
@@ -119,7 +134,6 @@ with open('items.csv', mode='r') as items_file:
         else:  # assign values to the item holder list
             value[0] = int(value[0])
             value[2] = int(value[2])
-            # value[3] = convert(value[3])
             value[4] = int(value[4])
             item_holder.append(Item(value[0], value[1], value[2], value[3], value[4]))
 
@@ -143,6 +157,7 @@ while len(item_holder) > 0:
         warehouseList[warehouse_index].insurance = warehouseList[warehouse_index].insurance + item.value
         item_holder.pop(0)
         warehouse_index = 0
+
     elif warehouse_index < 4:
         warehouse_index += 1
     else:
