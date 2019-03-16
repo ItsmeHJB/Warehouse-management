@@ -1,5 +1,5 @@
 Shape,Slots,Weight(kg)
-R,10,500
-C,2,750
-P,2,3000
-S,10,750
+Rectangle,10,500
+Sphere,2,750
+Pyramid,2,3000
+Square,10,750

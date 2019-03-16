@@ -1,5 +1,5 @@
 # File:           ArtPart1.py
-# Purpose:        To contain all the basic classes for coursework 2 (dadsa)
+# Purpose:        To demonstrate the working code for problem Part 1 (dadsa)
 # Author:         Harrison Bennion
 # Student Number: 17012546
 
@@ -79,8 +79,10 @@ def import_items(warehouse, filename):
                 row[4] = int(row[4])
                 for shelf in range(len(warehouse.shelves)):
                     if warehouse.shelves[shelf].shape == row[3]:
+                        # print(row)
                         new_item = Item(row[0], row[1], row[2], row[3], row[4])
-                        warehouse.shelves[shelf].append(new_item)
+                        warehouse.shelves[shelf].items.append(new_item)
+                        warehouse.insurance = warehouse.insurance + new_item.value
 
 
 # Function to see if there's space in a warehouse
@@ -118,6 +120,7 @@ for i in range(len(warehouseList)):
     shelf_path = (cur_path / file). resolve()
     import_warehouse_shelf(warehouseList[i], shelf_path)
 
+print("Importing the start items to begin the program\n")
 # Import the start items into their warehouses
 for i in range(len(warehouseList)):
     file = "../" + warehouseList[i].name + '.csv'
@@ -155,7 +158,7 @@ while len(item_holder) > 0:
               "remaining insurance")
 
     # check warehouse A on our first run through
-    elif(warehouseList[0].insurance + item.value) <= MAX_WAREHOUSE_VALUE:
+    elif (warehouseList[0].insurance + item.value) <= MAX_WAREHOUSE_VALUE:
         # Loop through available shelves
         for index in range(len(warehouseList[0].shelves)):
             # If there is shelf with the right shape
@@ -164,9 +167,10 @@ while len(item_holder) > 0:
                 item_to_be_added = check_shelf(item, warehouseList[0].shelves[index])
                 # Store that the item is going into warehouse A later
                 store_in_warehouse_index = 0
+                break
 
     # If the item cannot be added to warehouse A
-    elif not item_to_be_added:
+    if not item_to_be_added:
         # Reset the warehouse_fit list
         warehouse_fit.clear()
         # Loop through the rest of the warehouses for space in each
@@ -180,26 +184,28 @@ while len(item_holder) > 0:
                             # Check if the shelf has space and the right weight for item
                             if check_shelf(item, warehouseList[warehouse_index].shelves[shelf_index]):
                                 # If the item is 100% valid etc, we now find the fit of each warehouse
-                                warehouse_fit.insert(warehouse_index, check_shelf_fit(item, warehouseList[
-                                    warehouse_index].shelves[shelf_index]))
+                                warehouse_fit.append([check_shelf_fit(item, warehouseList[warehouse_index].shelves[
+                                    shelf_index]), warehouse_index])
                             # If we have found the right shelf in the warehouse -> stop looking at them all
-                            break
+                            else:
+                                break
 
         # After all that, we see if any warehouses can fit, and decided which is best fit
         if warehouse_fit:
-            best_fit = 0
-            # Search for fest fit
+            # Set best fit to something big
+            best_fit = 999999999
+            # Search for best fit (smallest value)
             for fit_index in range(len(warehouse_fit)):
-                if warehouse_fit[fit_index] > best_fit:
-                    best_fit = warehouse_fit[fit_index]
-                    store_in_warehouse_index = fit_index
+                if warehouse_fit[fit_index][0] < best_fit:
+                    best_fit = warehouse_fit[fit_index][0]
+                    store_in_warehouse_index = warehouse_fit[fit_index][1]
                     item_to_be_added = True
 
     # If we have a found a fit for the item somewhere in the code
     if item_to_be_added:
         # Find the index of the shelf it's being added to
         for shelf_index in range(len(warehouseList[store_in_warehouse_index].shelves)):
-            if warehouseList[store_in_warehouse_index].shelves[shelf_index] == item.shape:
+            if warehouseList[store_in_warehouse_index].shelves[shelf_index].shape == item.shape:
                 shelf_to_add_to = shelf_index
                 break
 
@@ -212,8 +218,9 @@ while len(item_holder) > 0:
 
     # If we cannot add this anywhere
     else:
-        print("There is not space for the item with item number: " + str(item.id) + " in any warehouse. \nThis item "
-                                                                                    "will be discarded")
+        print("There isn't space for the item with item number: " + str(item.id) + " in any warehouse. \nThis item "
+                                                                                   "will be discarded")
+        # Remove it from the stack
         item_holder.pop(0)
 
 # Print out the warehouse contents to view the results of the add

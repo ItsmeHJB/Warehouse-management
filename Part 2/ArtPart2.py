@@ -1,5 +1,5 @@
-# File:           Base file.py
-# Purpose:        To contain all the basic classes for coursework 2 (dadsa)
+# File:           ArtPart2.py
+# Purpose:        Part 2 of the coursework(dadsa)
 # Author:         Harrison Bennion
 # Student Number: 17012546
 
@@ -122,4 +122,40 @@ for i in range(len(warehouseList)):
     item_path = (cur_path / file).resolve()
     import_items(warehouseList[i], item_path)
 
-# BEGIN CODE FOR SPECIFIC TASK #######################
+# BEGIN CODE FOR SPECIFIC TASK ##########################################################
+trip_holder = []
+total_warehouse_insurance = 0
+
+
+class Van:
+    def __init__(self, items, start, end):
+        self.items = items
+        self.start_warehouse = start
+        self.end_warehouse = end
+        self.weight = 2000
+        self.max_insurance = 1500000000
+
+
+def warehouse_name_to_index(name):
+    conversion = {
+        "A": 0,
+        "B": 1,
+        "C": 2,
+        "D": 3
+    }
+    return conversion.get(name)
+
+
+print("Importing the items to be transported by the van")
+# Import items to be transported by the van
+with open('trips.csv', mode='r') as items_file:
+    items_reader = csv.reader(items_file)
+    line_count = 0
+    for value in items_reader:  # loop through csv file
+        if line_count == 0:  # Ignore the file headers
+            line_count += 1
+        else:  # assign values to the trip holder list
+            value[0] = int(value[0])
+            value[1] = warehouse_name_to_index(value[1])
+            value[2] = warehouse_name_to_index(value[2])
+            trip_holder.append([value[0], value[1], value[2 ]])
