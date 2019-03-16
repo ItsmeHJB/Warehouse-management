@@ -6,6 +6,7 @@
 # Import libraries
 import csv
 from pathlib import Path
+import operator
 
 # Declare global variables
 MAX_WAREHOUSE_VALUE = 2000000000
@@ -47,6 +48,23 @@ class Warehouse:
         self.shelves[shelf_number].items.append(art_piece)
         self.insurance = self.insurance + art_piece.value
 
+    def remove_item(self, art_piece, shelf_number):
+        self.shelves[shelf_number].items.remove(art_piece)
+        self.insurance = self.insurance - art_piece.value
+
+
+class Van:
+    __weight = 2000
+    __max_insurance = 1500000000
+
+    def __init__(self, item, start, end):
+        self.items = [item]
+        self.start_warehouse = start
+        self.end_warehouse = end
+
+    def add_item(self, item):
+        self.items.append(item)
+
 
 # Define functions
 # Import the shelves for the 4 warehouses with this from CSV files
@@ -67,10 +85,10 @@ def import_warehouse_shelf(warehouse, filename):
 def import_items(warehouse, filename):
     with open(filename, mode='r') as csv_file:  # open each file for reading
         csv_reader = csv.reader(csv_file)
-        line_count = 0
+        line_number = 0
         for row in csv_reader:  # loop through csv file
-            if line_count == 0:  # Ignore the file headers
-                line_count += 1
+            if line_number == 0:  # Ignore the file headers
+                line_number += 1
             else:  # assign id, description, value, shape and weight to item array in warehouse
                 row[0] = int(row[0])
                 row[2] = int(row[2])
@@ -91,10 +109,67 @@ def check_shelf(art_piece, shelf):
         return False
 
 
+# Dict function to return the warehouse index from it's name
+def warehouse_name_to_index(name):
+    conversion = {
+        "A": 0,
+        "B": 1,
+        "C": 2,
+        "D": 3
+    }
+    return conversion.get(name)
+
+
+# Sort the trips with regards to their start and end position. A first, descending to D.
+def sort_trips(trips):
+    trips.sort(key=operator.itemgetter(1, 2))
+
+
+# Check if the trip will be valid if we move this item
+def check_trip(trip):
+    valid_add = False
+
+    item = Item
+    # Find the item in the first warehouse
+    start_warehouse = trip[1]
+    # For all the shelves in the warehouse
+    for shelves in range(len(warehouseList[start_warehouse].shelves)):
+        # Look through each item to find the right one
+        for items in range(len(warehouseList[start_warehouse].shelves[shelves].items)):
+            # If the item number matches, we've found our item
+            if warehouseList[start_warehouse].shelves[shelves].items[items].id == trip[0]:
+                item = warehouseList[start_warehouse].shelves[shelves].items[items]
+                start_shelf_index = shelves
+                break
+
+    # Check if the item can be moved to the warehouse in a valid fashion
+    end_warehouse = trip[2]
+
+    # Check the insurance is enough to cover the item
+    if warehouseList[end_warehouse].insurance + item.value <= MAX_WAREHOUSE_VALUE:
+        # Find index of shelf we are adding to
+        end_shelf_index = find_shelf_index(warehouseList[end_warehouse].shelves, item.shape)
+        # Check shelf_index is set, if it isn't then there isn't a valid shelf
+        if not end_shelf_index == -1:
+            # Check if there is space on the shelf
+            valid_add = check_shelf(item, warehouseList[end_warehouse].shelves[end_shelf_index])
+            # If it's a valid move, move the item to the warehouse
+            warehouseList[start_warehouse].remove_item(item, start_shelf_index)
+            warehouseList[end_warehouse].add_item(item, end_shelf_index)
+
+    return valid_add
+
+
+# Function to find the index of a shelf in a warehouse
+def find_shelf_index(warehouse_shelves, shape):
+    for index in range(len(warehouse_shelves)):
+        if warehouse_shelves[index].shape == shape:
+            return index
+
+
 #####################################################
 # Main Code #########################################
 #####################################################
-
 print("Welcome to the art dealership\n")
 
 print("Initialising empty warehouses\n")
@@ -126,26 +201,6 @@ for i in range(len(warehouseList)):
 trip_holder = []
 total_warehouse_insurance = 0
 
-
-class Van:
-    def __init__(self, items, start, end):
-        self.items = items
-        self.start_warehouse = start
-        self.end_warehouse = end
-        self.weight = 2000
-        self.max_insurance = 1500000000
-
-
-def warehouse_name_to_index(name):
-    conversion = {
-        "A": 0,
-        "B": 1,
-        "C": 2,
-        "D": 3
-    }
-    return conversion.get(name)
-
-
 print("Importing the items to be transported by the van")
 # Import items to be transported by the van
 with open('trips.csv', mode='r') as items_file:
@@ -156,6 +211,46 @@ with open('trips.csv', mode='r') as items_file:
             line_count += 1
         else:  # assign values to the trip holder list
             value[0] = int(value[0])
-            value[1] = warehouse_name_to_index(value[1])
+            value[1] = warehouse_name_to_index(value[1])  # Convert the name to index of each warehouse
             value[2] = warehouse_name_to_index(value[2])
-            trip_holder.append([value[0], value[1], value[2 ]])
+            trip_holder.append([value[0], value[1], value[2]])
+
+# Sort the trips
+sort_trips(trip_holder)
+
+# Set the trip counter to 0
+number_of_trips = 0
+
+# While there are trips to be made
+while trip_holder:
+
+    valid = False
+    trip_index = -1
+    # Look at trips in trip_holder, find first valid item which can be moved
+    for i in range(len(trip_holder)):
+        valid = check_trip(trip_holder[i])
+        if valid:
+            trip_index = i
+            break
+
+    # Add this first item to the van
+    try:
+        van = Van(trip_holder[trip_index][0], trip_holder[trip_index][1], trip_holder[trip_index][2])
+        # Pop the item from the trip_holder
+        trip_holder.pop(trip_index)
+    except IndexError:  # If there is no valid move (trip_index == -1), break from loop
+        print("There are no more valid trips which can be made")
+        break
+
+    trip_index_list = []
+    # See if there are other items with the same trip
+    for i in range(len(trip_holder)):
+        # If the start and end warehouses are the same
+        if (van.start_warehouse == trip_holder[i][1]) and (van.end_warehouse == trip_holder[i][2]):
+            # Check if the end warehouse can hold the item
+            if check_trip(trip_holder[i]):
+                van.add_item(trip_holder[i][0])
+                trip_index_list.append(i)
+
+    for i in range(len(trip_index_list)):
+        trip_holder.pop(trip_index_list[i])
