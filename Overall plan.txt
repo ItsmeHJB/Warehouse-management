@@ -1,4 +1,4 @@
-21st March 2019 - DUE DATE
+﻿21st March 2019 - DUE DATE
 
 £2b each warehouse
 £8b total
@@ -41,6 +41,13 @@ TO DO: (SEPERATE CODES)
 		van can reach 2 warehouses, but can only travel A -> B -> C -> D but can relocate overnight
 		(van can travel A -> C for example)
 		calculate minimum trips to with weight and cost considered
+		
+		(Code idea)
+		Get first valid trip
+		Find any other that are on the same route
+		Find any that are going from the same warehouse to another further along
+		if found 2nd drop -> find going from 1st to second
+		else -> find going from first to one further along
 		
 	4)
 	Do it again, but they all have to be the same shape this time

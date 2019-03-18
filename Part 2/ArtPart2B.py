@@ -57,14 +57,13 @@ class Van:
     max_weight = 2000
     max_insurance = 1500000000
 
-    def __init__(self, item, start, end):
-        self.items = [item]
+    def __init__(self, art_id, start, end):
+        self.items = [art_id]
         self.start_warehouse = start
         self.end_warehouse = end
-        self.current_insurance = 0
 
-    def add_item(self, item):
-        self.items.append(item)
+    def add_item(self, art_id):
+        self.items.append(art_id)
 
 
 # Define functions
@@ -129,6 +128,7 @@ def sort_trips(trips):
 # Check if the trip will be valid if we move this item
 def check_trip(trip):
     valid_add = False
+    end_shelf_index = -1
 
     item = Item
     # Find the item in the first warehouse
@@ -222,7 +222,6 @@ for i in range(len(warehouseList)):
 
 # BEGIN CODE FOR SPECIFIC TASK ##########################################################
 trip_holder = []
-total_warehouse_insurance = 0
 
 print("Importing the items to be transported by the van")
 # Import items to be transported by the van
@@ -248,6 +247,7 @@ van_weight = 0
 
 # While there are trips to be made
 while trip_holder:
+    # Reset variables
     valid = False
     trip_index = -1
     van_insurance = 0
@@ -263,7 +263,7 @@ while trip_holder:
         if (van_insurance + item.value <= Van.max_insurance) and (van_weight + item.weight <= Van.max_weight):
             # Check if the move is valid
             valid = check_trip(trip_holder[i])
-            if valid:  # If it is a valid move to put it in the warehouse
+            if valid:  # If it is a valid move to put it in the van
                 trip_index = i
                 van_insurance = van_insurance + item.value
                 van_weight = van_weight + item.weight
@@ -280,9 +280,9 @@ while trip_holder:
         print("\nThere are no more valid trips which can be made")
         break
 
-    trip_index_list = []
     # See if there are other items with the same trip
-    for i in range(len(trip_holder)):
+    i = 0
+    while i < len(trip_holder):
         # If the start and end warehouses are the same
         if (van.start_warehouse == trip_holder[i][1]) and (van.end_warehouse == trip_holder[i][2]):
             # Find the item we need
@@ -292,12 +292,10 @@ while trip_holder:
                 # Check if the end warehouse can hold the item
                 if check_trip(trip_holder[i]):
                     van.add_item(trip_holder[i][0])
-                    trip_index_list.append(i)
                     van_insurance = van_insurance + item.value
                     van_weight = van_weight + item.weight
-
-    for i in range(len(trip_index_list)):
-        trip_holder.pop(trip_index_list[i])
+                    trip_holder.pop(i)
+        i += 1
 
     number_of_trips += 1
 

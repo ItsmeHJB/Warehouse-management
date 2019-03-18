@@ -57,14 +57,13 @@ class Van:
     max_weight = 2000
     max_insurance = 1500000000
 
-    def __init__(self, item, start, end):
-        self.items = [item]
+    def __init__(self, art_id, start, end):
+        self.items = [art_id]
         self.start_warehouse = start
         self.end_warehouse = end
-        self.current_insurance = 0
 
-    def add_item(self, item):
-        self.items.append(item)
+    def add_item(self, art_id):
+        self.items.append(art_id)
 
 
 # Define functions
@@ -222,7 +221,6 @@ for i in range(len(warehouseList)):
 
 # BEGIN CODE FOR SPECIFIC TASK ##########################################################
 trip_holder = []
-total_warehouse_insurance = 0
 
 print("Importing the items to be transported by the van")
 # Import items to be transported by the van
@@ -278,9 +276,9 @@ while trip_holder:
         print("\nThere are no more valid trips which can be made")
         break
 
-    trip_index_list = []
     # See if there are other items with the same trip
-    for i in range(len(trip_holder)):
+    i = 0
+    while i < len(trip_holder):
         # If the start and end warehouses are the same
         if (van.start_warehouse == trip_holder[i][1]) and (van.end_warehouse == trip_holder[i][2]):
             # Find the item we need
@@ -290,11 +288,9 @@ while trip_holder:
                 # Check if the end warehouse can hold the item
                 if check_trip(trip_holder[i]):
                     van.add_item(trip_holder[i][0])
-                    trip_index_list.append(i)
                     van_weight = van_weight + item.weight
-
-    for i in range(len(trip_index_list)):
-        trip_holder.pop(trip_index_list[i])
+                    trip_holder.pop(i)
+        i += 1
 
     number_of_trips += 1
 
