@@ -290,7 +290,12 @@ while trip_holder:
                     van.add_item(trip_holder[i][0])
                     van_weight = van_weight + item.weight
                     trip_holder.pop(i)
-        i += 1
+                else:
+                    i += 1
+            else:
+                i += 1
+        else:
+            i += 1
 
     number_of_trips += 1
 

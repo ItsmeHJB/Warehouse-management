@@ -295,7 +295,12 @@ while trip_holder:
                     van_insurance = van_insurance + item.value
                     van_weight = van_weight + item.weight
                     trip_holder.pop(i)
-        i += 1
+                else:
+                    i += 1
+            else:
+                i += 1
+        else:
+            i += 1
 
     number_of_trips += 1
 
