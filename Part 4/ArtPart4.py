@@ -382,8 +382,8 @@ while item_holder:
                     # Find item we need from the warehouse
                     item = find_item(item_holder[i][0])
                     # Check if it fits in the van
-                    if (van.insurance + item.value <= van.max_insurance) and (van.weight + item.weight <= van.max_weight)\
-                            and (van.shape_two == item.shape):
+                    if (van.insurance + item.value <= van.max_insurance) and \
+                            (van.weight + item.weight <= van.max_weight) and (van.shape_two == item.shape):
                         # Check the end warehouse can hold it
                         if check_trip(item, van.stop_two, van.start_two):
                             # If move is valid as well, add it to the van transport
@@ -418,8 +418,8 @@ while item_holder:
                 print("Item number: " + str(van.shelf[i]))
     else:
         trip_string += (" and finished at " + warehouse_index_to_name(van.stop_one))
-        print("These items of shape " + van.shape_one + " were moved: ")
         print(trip_string)
+        print("These items of shape " + van.shape_one + " were moved: ")
         for i in range(len(van.shelf)):
             print("Item number: " + str(van.shelf[i]))
 

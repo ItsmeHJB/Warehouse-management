@@ -3,7 +3,53 @@
 # Author:         Harrison Bennion
 # Student Number: 17012546
 
-# To do: add best fit case
+# PSEUDO CODE for Part 1
+# Initialise 4 empty warehouses
+# Place these in a list for easy iteration
+# Add the shelves to their warehouses from the base files
+# Import and add the start items to their warehouses
+#
+# Import the task specific items from Items.csv
+# Load these into a queue based list
+#
+# While there are still items to add to the warehouse:
+#   Get the first item from item queue
+#   If item will push total of all warehouses over insurance limit
+#       yes -> print error and discard item as it cannot go anywhere
+#
+#   Check if the item fits in warehouse A
+#   If warehouse A has enough insurance to cover the new add:
+#       Loop through the shelves in A:
+#           If the item shape matches the shelf shape:
+#               Check there is space on the shelf for this new item (weight and max slots)
+#               If item can be added to shelf:#
+#                   Set add flag and set warehouse storage to point to warehouse A
+#
+#   If add flag is not set: (could not add to A)
+#       Clear fitness list of all values
+#       Loop through the other 3 warehouses:
+#           If there is enough insurance to cover it:
+#               Loop through the shelves in the warehouse:
+#                   If the shelf shape is the same as the new item:
+#                       If there is space on the shelf for this new item:
+#                           Find the fit value of adding this item to this warehouse
+#                           Append this to a fitness list
+#                       else:
+#                           break from shelf loop
+#
+#       If the fitness list has any items in:
+#           Set best fit to a large number
+#           Loop through fitness list:
+#               Find best item from the list -> set best fit to this value
+#               Set warehouse storage to point at this warehouse we found to be best
+#
+#   If we have found a space for the item:
+#       Find the shelf in the warehouse to add to
+#       Add the item to the warehouse shelf and update warehouse and total insurance
+#       Pop this item from the item queue
+#   else: (there is no where to put it)
+#       Print an error message
+#       Pop this item from the queue
 
 # Import libraries
 import csv
@@ -69,10 +115,10 @@ def import_warehouse_shelf(warehouse, filename):
 def import_items(warehouse, filename):
     with open(filename, mode='r') as csv_file:  # open each file for reading
         csv_reader = csv.reader(csv_file)
-        line_count = 0
+        row_count = 0
         for row in csv_reader:  # loop through csv file
-            if line_count == 0:  # Ignore the file headers
-                line_count += 1
+            if row_count == 0:  # Ignore the file headers
+                row_count += 1
             else:  # assign id, description, value, shape and weight to item array in warehouse
                 row[0] = int(row[0])
                 row[2] = int(row[2])
@@ -165,8 +211,9 @@ while len(item_holder) > 0:
             if warehouseList[0].shelves[index].shape == item.shape:
                 # Check if the shelf has space and the right weight for item
                 item_to_be_added = check_shelf(item, warehouseList[0].shelves[index])
-                # Store that the item is going into warehouse A later
-                store_in_warehouse_index = 0
+                if item_to_be_added:  # Successful add possible
+                    # Store that the item is going into warehouse A later
+                    store_in_warehouse_index = 0
                 break
 
     # If the item cannot be added to warehouse A
@@ -181,17 +228,17 @@ while len(item_holder) > 0:
                 for shelf_index in range(len(warehouseList[warehouse_index].shelves)):
                     # If there is shelf with the right shape
                     if warehouseList[warehouse_index].shelves[shelf_index].shape == item.shape:
-                            # Check if the shelf has space and the right weight for item
-                            if check_shelf(item, warehouseList[warehouse_index].shelves[shelf_index]):
-                                # If the item is 100% valid etc, we now find the fit of each warehouse
-                                warehouse_fit.append([check_shelf_fit(item, warehouseList[warehouse_index].shelves[
-                                    shelf_index]), warehouse_index])
-                            # If we have found the right shelf in the warehouse -> stop looking at them all
-                            else:
-                                break
+                        # Check if the shelf has space and the right weight for item
+                        if check_shelf(item, warehouseList[warehouse_index].shelves[shelf_index]):
+                            # If the item is 100% valid etc, we now find the fit of each warehouse
+                            warehouse_fit.append([check_shelf_fit(item, warehouseList[warehouse_index].shelves[
+                                shelf_index]), warehouse_index])
+                        # If we have found the right shelf in the warehouse -> stop looking at them all
+                        else:
+                            break
 
         # After all that, we see if any warehouses can fit, and decided which is best fit
-        if warehouse_fit:
+        if len(warehouse_fit) > 0:
             # Set best fit to something big
             best_fit = 999999999
             # Search for best fit (smallest value)
@@ -220,7 +267,7 @@ while len(item_holder) > 0:
     else:
         print("There isn't space for the item with item number: " + str(item.id) + " in any warehouse. \nThis item "
                                                                                    "will be discarded")
-        # Remove it from the stack
+        # Remove it from the queue
         item_holder.pop(0)
 
 # Print out the warehouse contents to view the results of the add

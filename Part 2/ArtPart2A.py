@@ -129,7 +129,7 @@ def sort_trips(trips):
 def check_trip(trip):
     valid_add = False
 
-    item = Item
+    art = Item
     # Find the item in the first warehouse
     start_warehouse = trip[1]
     # For all the shelves in the warehouse
@@ -138,7 +138,7 @@ def check_trip(trip):
         for items in range(len(warehouseList[start_warehouse].shelves[shelves].items)):
             # If the item number matches, we've found our item
             if warehouseList[start_warehouse].shelves[shelves].items[items].id == trip[0]:
-                item = warehouseList[start_warehouse].shelves[shelves].items[items]
+                art = warehouseList[start_warehouse].shelves[shelves].items[items]
                 start_shelf_index = shelves
                 break
 
@@ -146,17 +146,17 @@ def check_trip(trip):
     end_warehouse = trip[2]
 
     # Check the insurance is enough to cover the item
-    if warehouseList[end_warehouse].insurance + item.value <= MAX_WAREHOUSE_VALUE:
+    if warehouseList[end_warehouse].insurance + art.value <= MAX_WAREHOUSE_VALUE:
         # Find index of shelf we are adding to
-        end_shelf_index = find_shelf_index(warehouseList[end_warehouse].shelves, item.shape)
+        end_shelf_index = find_shelf_index(warehouseList[end_warehouse].shelves, art.shape)
         # Check shelf_index is set, if it isn't then there isn't a valid shelf
         if not end_shelf_index == -1:
             # Check if there is space on the shelf
-            valid_add = check_shelf(item, warehouseList[end_warehouse].shelves[end_shelf_index])
+            valid_add = check_shelf(art, warehouseList[end_warehouse].shelves[end_shelf_index])
             # If it's a valid move, move the item to the warehouse
             if valid_add:
-                warehouseList[start_warehouse].remove_item(item, start_shelf_index)
-                warehouseList[end_warehouse].add_item(item, end_shelf_index)
+                warehouseList[start_warehouse].remove_item(art, start_shelf_index)
+                warehouseList[end_warehouse].add_item(art, end_shelf_index)
 
     return valid_add
 

@@ -1,5 +1,5 @@
 # File:           ArtPart2A.py
-# Purpose:        Part 2A of the coursework(dadsa)
+# Purpose:        Part 2N    of the coursework(dadsa)
 # Author:         Harrison Bennion
 # Student Number: 17012546
 
