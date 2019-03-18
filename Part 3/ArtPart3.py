@@ -79,11 +79,9 @@ class Van:
         self.weight = art.weight
 
     def second_drop(self, art, start_warehouse, stop_warehouse):
-        self.items.append(art.id)
+        self.add_item(art)
         self.start_two = start_warehouse
         self.stop_two = stop_warehouse
-        self.insurance += art.value
-        self.weight += art.weight
 
     def add_item(self, art):
         self.items.append(art.id)
@@ -261,7 +259,7 @@ number_of_trips = 0
 while item_holder:
     # Initialise van and other things
     van = Van()
-    trip_index = -1
+    trip_index = None
 
     # Look at list of item, find first valid item which can be moved
     for i in range(len(item_holder)):
@@ -277,7 +275,7 @@ while item_holder:
                 break  # We only want one item to start it, so break if found
 
     # Check if we have a valid item to move (trip_index is set)
-    if not trip_index == -1:
+    if trip_index is not None:
         # Pop it off the item_holder array
         item_holder.pop(trip_index)
     else:
@@ -379,6 +377,6 @@ while item_holder:
 
 print("Total runs: " + str(number_of_trips))
 if len(item_holder) > 0:
-    print("Unfortunately, not all the items could be moved. They are listed below: ")
+    print("Unfortunately, not all the items could be moved to their specified destinations. They are listed below: ")
     for i in range(len(item_holder)):
         print("Item number: " + str(item_holder[i][0]))

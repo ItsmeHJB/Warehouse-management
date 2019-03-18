@@ -65,47 +65,39 @@ class Van:
     max_insurance = 1500000000
     insurance = 0
     weight = 0
-    shelf = None
+    shape_one = None
+    shape_two = None
+    shelf = []
     start_one = None
     stop_one = None
     start_two = None
     stop_two = None
 
     def initial_run(self, art, start_warehouse, stop_warehouse):
-        self.shelf = VanShelf(art.shape, art.id)
+        self.shelf.append(art.id)
+        self.shape_one = art.shape
         self.start_one = start_warehouse
         self.stop_one = stop_warehouse
         self.insurance = art.value
         self.weight = art.weight
 
     def second_drop(self, art, start_warehouse, stop_warehouse):
-        self.shelf.add_item(art.id)
+        self.add_item(art)
         self.start_two = start_warehouse
         self.stop_two = stop_warehouse
-        self.insurance += art.value
-        self.weight += art.weight
+        self.shape_two = art.shape
 
     def add_item(self, art):
-        self.shelf.add_item(art.id)
+        self.shelf.append(art.id)
         self.insurance += art.value
         self.weight += art.weight
 
     def reset_trips(self):
-        self.shelf.items.clear()
-        self.shelf.shape = None
+        self.shelf.clear()
+        self.shape_one = None
+        self.shape_two = None
         self.insurance = 0
         self.weight = 0
-
-
-class VanShelf:
-    items = []
-
-    def __init__(self, shape, item_id):
-        self.shape = shape
-        self.items.append(item_id)
-
-    def add_item(self, item_id):
-        self.items.append(item_id)
 
 
 # Define functions
@@ -200,7 +192,7 @@ def check_trip(art, destination, start):
     if warehouseList[destination].insurance + art.value + van.insurance <= MAX_WAREHOUSE_VALUE:
         # Find the index of shelf we are adding to
         shelf_index = find_shelf_index(warehouseList[destination].shelves, art.shape)
-        # Check the shelf is set (will be -1 if not)
+        # Check the shelf is set (will be None if not)
         if shelf_index is not None:
             valid_add = check_shelf(art, warehouseList[destination].shelves[shelf_index])
             if valid_add:
@@ -273,7 +265,7 @@ number_of_trips = 0
 while item_holder:
     # Initialise van and other things
     van = Van()
-    trip_index = -1
+    trip_index = None
 
     # Look at list of item, find first valid item which can be moved
     for i in range(len(item_holder)):
@@ -284,20 +276,18 @@ while item_holder:
             # Check if the move is valid
             if check_trip(item, item_holder[i][2], item_holder[i][1]):
                 # If the move is valid, we put it in the van
-                trip_index = i
                 van.initial_run(item, item_holder[i][1], item_holder[i][2])
+                item_holder.pop(i)  # Remove item from list
+                trip_index = i
                 break  # We only want one item to start it, so break if found
 
     # Check if we have a valid item to move (trip_index is set)
-    if not trip_index == -1:
-        # Pop it off the item_holder array
-        item_holder.pop(trip_index)
-    else:
+    if trip_index is None:
         # If there are no more possible moves
         print("\nThere are no more valid trips which can be made")
         break
 
-    # See if there are other items which are travelling the same trip, and have identical start & dest
+    # See if there are other items which are travelling the same trip, and have identical start & dest & shape
     i = 0
     while i < len(item_holder):
         # If the start and end warehouse are identical
@@ -305,7 +295,8 @@ while item_holder:
             # Find item we need from the warehouse
             item = find_item(item_holder[i][0])
             # Check if it fits in the van
-            if (van.insurance + item.value <= van.max_insurance) and (van.weight + item.weight <= van.max_weight):
+            if (van.insurance + item.value <= van.max_insurance) and (van.weight + item.weight <= van.max_weight) and (
+                    item.shape == van.shape_one):
                 # Check the end warehouse can hold it
                 if check_trip(item, van.stop_one, van.start_one):
                     # If move is valid as well, add it to the van
@@ -318,13 +309,30 @@ while item_holder:
         else:
             i += 1
 
-    # Next, check if there are other items which can be moved
+    # Next, check if there are other items which can be an extension of the same journey
     i = 0
     while i < len(item_holder):
-        # Check if item has the same start, but different end, so it continues onwards after the first drop OR starts at
-        #  first stop, so it drops all and continues to second place OR finishes at the same place so it could be picked
-        #  up on route to the final destination
-        if van.start_one == item_holder[i][1] or van.stop_one == item_holder[i][1] or van.stop_one == item_holder[i][2]:
+        # Check if item has same start and shape so it can be transferred at the same time
+        if van.start_one == item_holder[i][1] and item_holder[i][2] > van.stop_one:  # Same start check
+            # Find the item we need
+            item = find_item(item_holder[i][0])
+            # Check if it fits in the van
+            if (van.insurance + item.value <= van.max_insurance) and (van.weight + item.weight <= van.max_weight) and (
+                    van.shape_one == item.shape):
+                # Check the end warehouse can hold it
+                if check_trip(item, item_holder[i][2], item_holder[i][1]):
+                    # If this move is valid, add it to the van for transport
+                    van.second_drop(item, item_holder[i][1], item_holder[i][2])
+                    item_holder.pop(i)
+                    break  # We can only do 2 runs, so we break from while loop after finding run 2
+                else:
+                    i += 1
+            else:
+                i += 1
+
+        # If we cannot transfer an item from the same start, try a different item from the first stop (so that it can be
+        # a different shape)
+        elif van.stop_one == item_holder[i][1]:
             # Find the item we need
             item = find_item(item_holder[i][0])
             # Check if it fits in the van
@@ -343,49 +351,77 @@ while item_holder:
             i += 1
 
     if van.start_two is not None:  # If we are doing a second run
-        # Find other trips with the same pattern as trip two OR start_one to stop_two
+        # Loop through other trips
         i = 0
         while i < len(item_holder):
-            # If the start and end warehouse are identical
-            if ((van.start_two == item_holder[i][1]) and (van.stop_two == item_holder[i][2])) or (
-                    (van.start_one == item_holder[i][1]) and (van.stop_two == item_holder[i][2])):
-                # Find item we need from the warehouse
-                item = find_item(item_holder[i][0])
-                # Check if it fits in the van
-                if (van.insurance + item.value <= van.max_insurance) and (van.weight + item.weight <= van.max_weight):
-                    # Check the end warehouse can hold it
-                    if check_trip(item, van.stop_two, van.start_two):
-                        # If move is valid as well, add it to the van transport
-                        van.add_item(item)  # Add to van
-                        item_holder.pop(i)
+            # If we are transferring the same shape object on both journeys
+            if van.shape_one == van.shape_two:
+                # Find items travelling from start_one to stop_two as well as items doing the same trip as trip two
+                if ((van.start_two == item_holder[i][1]) and (van.stop_two == item_holder[i][2])) or \
+                        ((van.start_one == item_holder[i][1]) and (van.stop_two == item_holder[i][2])):
+                    # Find item we need from the warehouse
+                    item = find_item(item_holder[i][0])
+                    # Check if it fits in the van
+                    if (van.insurance + item.value <= van.max_insurance) and \
+                            (van.weight + item.weight <= van.max_weight) and (van.shape_two == item.shape):
+                        # Check the end warehouse can hold it
+                        if check_trip(item, van.stop_two, van.start_two):
+                            # If move is valid as well, add it to the van transport
+                            van.add_item(item)  # Add to van
+                            item_holder.pop(i)
+                        else:
+                            i += 1
                     else:
                         i += 1
                 else:
                     i += 1
+            # If we are doing a different shape item for each trip
             else:
-                i += 1
+                # Only find identical trips to trip two
+                if (van.start_two == item_holder[i][1]) and (van.stop_two == item_holder[i][2]):
+                    # Find item we need from the warehouse
+                    item = find_item(item_holder[i][0])
+                    # Check if it fits in the van
+                    if (van.insurance + item.value <= van.max_insurance) and (van.weight + item.weight <= van.max_weight)\
+                            and (van.shape_two == item.shape):
+                        # Check the end warehouse can hold it
+                        if check_trip(item, van.stop_two, van.start_two):
+                            # If move is valid as well, add it to the van transport
+                            van.add_item(item)  # Add to van
+                            item_holder.pop(i)
+                        else:
+                            i += 1
+                    else:
+                        i += 1
+                else:
+                    i += 1
 
     number_of_trips += 1
 
     trip_string = ("\nOn trip number: " + str(number_of_trips) + ". The van started at " + warehouse_index_to_name(
         van.start_one))
     if van.start_two is not None:
-        if van.stop_one == van.start_two:
-            trip_string += (" then dropped everything at " + warehouse_index_to_name(van.stop_one) + " followed by" +
-                            " finishing at " + warehouse_index_to_name(van.stop_two) + " after picking up more items")
-        elif van.stop_one < van.stop_two:
-            trip_string += (" then stopped at " + warehouse_index_to_name(van.stop_one) + " to drop some items, "
-                            "followed by finishing at " + warehouse_index_to_name(van.stop_two))
+        if van.shape_one == van.shape_two:
+            trip_string += (" then stopped at " + warehouse_index_to_name(van.stop_one) + " then onto " +
+                            warehouse_index_to_name(van.stop_two))
+            print(trip_string)
+            print("These items of shape " + van.shape_one + " were moved: ")
+            for i in range(len(van.shelf)):
+                print("Item number: " + str(van.shelf[i]))
         else:
-            trip_string += (" then stopped at " + warehouse_index_to_name(van.start_two) + " to pickup more, followed "
-                            "by finishing at " + warehouse_index_to_name(van.stop_two))
+            trip_string += (" then stopped at " + warehouse_index_to_name(van.stop_one) + ", moving shape " +
+                            van.shape_one + ". It then moved to " + warehouse_index_to_name(van.stop_two) +
+                            ", moving shape " + van.shape_two)
+            print(trip_string)
+            print("These items were moved: ")
+            for i in range(len(van.shelf)):
+                print("Item number: " + str(van.shelf[i]))
     else:
         trip_string += (" and finished at " + warehouse_index_to_name(van.stop_one))
-
-    print(trip_string)
-    print("These items were moved: ")
-    for i in range(len(van.shelf.items)):
-        print("Item number: " + str(van.shelf.items[i]))
+        print("These items of shape " + van.shape_one + " were moved: ")
+        print(trip_string)
+        for i in range(len(van.shelf)):
+            print("Item number: " + str(van.shelf[i]))
 
     van.reset_trips()
 
